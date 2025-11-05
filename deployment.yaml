@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: fraud-core-container
-        image: 231330298033.dkr.ecr.us-east-1.amazonaws.com/fid/fraud-core/fraud-core-repo:latest # IMPORTANT: Replace with your actual ECR image URI
+        image: 231330298033.dkr.ecr.us-east-1.amazonaws.com/fid/fraud-core:latest # IMPORTANT: Replace with your actual ECR image URI
         ports:
         - containerPort: 8080 # The port your Spring Boot app listens on internally
         resources:

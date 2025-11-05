@@ -37,7 +37,7 @@ jobs:
         # We use a shell command here because aws-actions/amazon-ecr-login provides credentials via Docker CLI
         run: |
           IMAGE_TAG=latest
-          REPO_URI=${{ secrets.ECR_REGISTRY_URL }}/fraud-core-repo
+          REPO_URI=${{ secrets.ECR_REGISTRY_URL }}
           
           # Build the image using the JAR created earlier
           docker build -t $REPO_URI:$IMAGE_TAG .

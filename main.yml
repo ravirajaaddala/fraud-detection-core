@@ -1,0 +1,61 @@
+name: Deploy Spring Boot App to EKS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Required for OIDC authentication
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Configure AWS Credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image to ECR
+        # We use a shell command here because aws-actions/amazon-ecr-login provides credentials via Docker CLI
+        run: |
+          IMAGE_TAG=latest
+          REPO_URI=${{ secrets.ECR_REGISTRY_URL }}/fraud-core-repo
+          
+          # Build the image using the JAR created earlier
+          docker build -t $REPO_URI:$IMAGE_TAG .
+          
+          # Push the image to ECR
+          docker push $REPO_URI:$IMAGE_TAG
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+          
+      - name: Deploy to EKS
+        run: |
+          # Apply the deployment changes using kubectl
+          kubectl apply -f deployment.yaml
+
+          # Optional: Rollout restart to pick up the new image tag immediately
+          kubectl rollout restart deployment/fraud-core-deployment

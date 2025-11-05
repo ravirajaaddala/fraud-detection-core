@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fraud-core-deployment
+  labels:
+    app: fraud-core
+spec:
+  replicas: 2 # <-- This sets the initial number of running pods
+  selector:
+    matchLabels:
+      app: fraud-core
+  template:
+    metadata:
+      labels:
+        app: fraud-core
+    spec:
+      containers:
+      - name: fraud-core-container
+        image: 231330298033.dkr.ecr.us-east-1.amazonaws.com/fid/fraud-core/fraud-core-repo:latest # IMPORTANT: Replace with your actual ECR image URI
+        ports:
+        - containerPort: 8080 # The port your Spring Boot app listens on internally
+        resources:
+          # Optional: Define CPU/Memory requests and limits
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: fraud-core-service
+  labels:
+    app: fraud-core
+spec:
+  selector:
+    app: fraud-core # This matches the labels on the pods above
+  type: LoadBalancer # Tells AWS EKS to provision an AWS Load Balancer
+  ports:
+    - protocol: TCP
+      port: 80 # The external port the Load Balancer exposes
+      targetPort: 8080 # The internal container port the LB forwards traffic to

@@ -1,4 +1,4 @@
-FROM openjdk:21-jdk-slim-bookworm
+FROM mcr.microsoft.com/openjdk/jdk:21-azurelinux
 WORKDIR /app
 COPY target/*.jar app.jar
 EXPOSE 8080
